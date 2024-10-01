@@ -27,7 +27,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.robotcontroller.external.samples;
+package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
@@ -60,10 +60,10 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
-// https://ftc-docs.firstinspires.org/en/latest/programming_resources/shared/auto_load_opmode/auto-load-opmode.html
-@Autonomous(name="Robot: Auto Drive By Encoder", group="Robot", preselectTeleOp = "TeleOpControlOpMode")
-//@Disabled
-public class RobotAutoDriveByEncoder_Linear extends LinearOpMode {
+
+@Autonomous(name="Robot: Auto Straight Line", group="Robot", preselectTeleOp = "TeleopControlOpMode")
+@Disabled
+public class AutoStraightLineOpModeLINEAR extends LinearOpMode {
 
     /* Declare OpMode members. */
     private DcMotor         leftDrive   = null;
@@ -72,7 +72,7 @@ public class RobotAutoDriveByEncoder_Linear extends LinearOpMode {
     private ElapsedTime     runtime = new ElapsedTime();
 
     // Calculate the COUNTS_PER_INCH for your specific drive train.
-    // Go to your motor vendor website to determine your motor's COUNTS_PER_MOTOR_REV
+    // TODO: Go to your motor vendor website to determine your motor's COUNTS_PER_MOTOR_REV. Resources on EB Software page.
     // For external drive gearing, set DRIVE_GEAR_REDUCTION as needed.
     // For example, use a value of 2.0 for a 12-tooth spur gear driving a 24-tooth spur gear.
     // This is gearing DOWN for less speed and more torque.
