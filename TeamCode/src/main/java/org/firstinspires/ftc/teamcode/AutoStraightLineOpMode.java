@@ -51,8 +51,8 @@ import com.qualcomm.robotcore.util.Range;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
+// This Straight Line auto simple treats the base as a tank drive.
 @Autonomous(name="Auto: Straight Line", group="Auto", preselectTeleOp = "TeleOpControlOpMode")
-@Disabled
 public class AutoStraightLineOpMode extends OpMode
 {
     // Declare OpMode members.
@@ -61,16 +61,18 @@ public class AutoStraightLineOpMode extends OpMode
     private DcMotor rightDrive = null;
 
     // Calculate the COUNTS_PER_INCH for your specific drive train.
-    // TODO: Go to your motor vendor website to determine your motor's COUNTS_PER_MOTOR_REV. Resources on EB Software page.
-    // For external drive gearing, set DRIVE_GEAR_REDUCTION as needed.
-    // For example, use a value of 2.0 for a 12-tooth spur gear driving a 24-tooth spur gear.
-    // This is gearing DOWN for less speed and more torque.
-    // For gearing UP, use a gear ratio less than 1.0. Note this will affect the direction of wheel rotation.
-    static final double     COUNTS_PER_MOTOR_REV    = 1440 ;    // eg: TETRIX Motor Encoder
-    static final double     DRIVE_GEAR_REDUCTION    = 1.0 ;     // No External Gearing.
-    static final double     WHEEL_DIAMETER_INCHES   = 4.0 ;     // For figuring circumference
+    /* TODO: You will need to determine the following values for your robot.
+     * Resources are available on the EB Software Documentation
+     *
+     */
+
+    static final double     COUNTS_PER_MOTOR_REV    = 28 ;
+    static final double     DRIVE_GEAR_REDUCTION    = 20.0 ;
+    static final double     WHEEL_DIAMETER_INCHES   = 2.9527 ;
     static final double     COUNTS_PER_INCH         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
             (WHEEL_DIAMETER_INCHES * 3.1415);
+
+
     static final double     DRIVE_SPEED             = 0.6;
     static final double     TURN_SPEED              = 0.5;
     /*
@@ -113,6 +115,12 @@ public class AutoStraightLineOpMode extends OpMode
     @Override
     public void start() {
         runtime.reset();
+        encoderDrive(DRIVE_SPEED,  48,  48, 5.0);  // S1: Forward 47 Inches with 5 Sec timeout
+        encoderDrive(TURN_SPEED,   12, -12, 4.0);  // S2: Turn Right 12 Inches with 4 Sec timeout
+        encoderDrive(DRIVE_SPEED, -24, -24, 4.0);  // S3: Reverse 24 Inches with 4 Sec timeout
+
+        telemetry.addData("Path", "Complete");
+        telemetry.update();
     }
 
     /*
@@ -120,13 +128,7 @@ public class AutoStraightLineOpMode extends OpMode
      */
     @Override
     public void loop() {
-        encoderDrive(DRIVE_SPEED,  48,  48, 5.0);  // S1: Forward 47 Inches with 5 Sec timeout
-        encoderDrive(TURN_SPEED,   12, -12, 4.0);  // S2: Turn Right 12 Inches with 4 Sec timeout
-        encoderDrive(DRIVE_SPEED, -24, -24, 4.0);  // S3: Reverse 24 Inches with 4 Sec timeout
 
-        telemetry.addData("Path", "Complete");
-        telemetry.update();
-        requestOpModeStop();
     }
 
     /*
@@ -142,7 +144,6 @@ public class AutoStraightLineOpMode extends OpMode
         int newLeftTarget;
         int newRightTarget;
 
-        // Ensure that the OpMode is still active
         // Determine new target position, and pass to motor controller
         newLeftTarget = leftDrive.getCurrentPosition() + (int) (leftInches * COUNTS_PER_INCH);
         newRightTarget = rightDrive.getCurrentPosition() + (int) (rightInches * COUNTS_PER_INCH);

@@ -33,6 +33,9 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
@@ -51,15 +54,32 @@ import com.qualcomm.robotcore.util.Range;
  */
 
 @TeleOp(name="TeleOp Control", group="Teleop")
-@Disabled
+
 public class TeleOpControlOpMode extends OpMode
 {
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
+
+    // Declare drive motors
     private DcMotor leftFrontDrive = null;
     private DcMotor leftBackDrive = null;
     private DcMotor rightFrontDrive = null;
     private DcMotor rightBackDrive = null;
+
+    // Declare end-effector members
+    private Servo intake = null;
+    private DcMotor extension = null;
+    private DcMotor pivot = null;
+
+    private double INTAKE_IN_POWER = 1.0;
+    private double INTAKE_OUT_POWER = -1.0;
+
+    private double EXTENSION_OUT_POWER = 1.0;
+    private double EXTENSION_IN_POWER = -1.0;
+
+    private double PIVOT_UP_POWER = 1.0;
+    private double PIVOT_DOWN_POWER = -1.0;
+
 
     /*
      * Code to run ONCE when the driver hits INIT
@@ -76,11 +96,19 @@ public class TeleOpControlOpMode extends OpMode
         rightFrontDrive = hardwareMap.get(DcMotor.class, "right_front_drive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "right_back_drive");
 
+        intake = hardwareMap.get(Servo.class, "intake");
+        extension = hardwareMap.get(DcMotor.class, "extension");
+        pivot = hardwareMap.get(DcMotor.class, "pivot");
+
         // TODO: Make sure all motors are facing the correct direction. Go one at a time.
         leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
         leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
         rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
+
+        intake.setDirection(Servo.Direction.FORWARD); // Forward should INTAKE.
+        extension.setDirection(DcMotorSimple.Direction.FORWARD); // Forward should EXTEND.
+        pivot.setDirection(DcMotorSimple.Direction.FORWARD); // Forward should pivot UP, or away from the stowed position.
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
@@ -114,11 +142,33 @@ public class TeleOpControlOpMode extends OpMode
     public void loop() {
         double max;
 
+        // COLLECT INPUTS
         // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
         double axial   = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
         double lateral =  gamepad1.left_stick_x;
         double yaw     =  gamepad1.right_stick_x;
 
+        boolean intakeInButton = gamepad1.right_bumper;
+        boolean intakeOutButton = gamepad1.left_bumper;
+        // This conditional reduces ambiguity in an edge case where both bumpers are pressed.
+        // Otherwise, this would be resolved by which function calls the motor value first.
+        if (intakeInButton && intakeOutButton) {
+            intakeInButton = false;
+        }
+
+        boolean extensionOutButton = gamepad1.dpad_left;
+        boolean extensionInButton = gamepad1.dpad_right;
+        if (extensionOutButton && extensionInButton) {
+            extensionOutButton = false;
+        }
+
+        boolean pivotUpButton = gamepad1.dpad_up;
+        boolean pivotDownButton = gamepad1.dpad_down;
+        if (pivotUpButton && pivotDownButton) {
+            pivotUpButton = false;
+        }
+
+        // DRIVE CODE
         // Combine the joystick requests for each axis-motion to determine each wheel's power.
         // Set up a variable for each drive wheel to save the power level for telemetry.
         double leftFrontPower  = axial + lateral + yaw;
@@ -156,13 +206,41 @@ public class TeleOpControlOpMode extends OpMode
             rightBackPower  = gamepad1.b ? 1.0 : 0.0;  // B gamepad
             */
 
-        // Send calculated power to wheels
+        // INTAKE CODE
+        double intakePower;
+        if (intakeInButton) {
+            intakePower = INTAKE_IN_POWER;
+        } else if (intakeOutButton) {
+            intakePower = INTAKE_OUT_POWER;
+        } else {
+            intakePower = 0.0;
+        }
+
+        // EXTENSION CODE
+        double extensionPower;
+        if (extensionOutButton) {
+            extensionPower = EXTENSION_OUT_POWER;
+        } else if (extensionInButton) {
+            extensionPower = EXTENSION_IN_POWER;
+        } else {
+            extensionPower = 0;
+        }
+
+        // PIVOT CODE
+        double pivotPower;
+        if
+
+        // WRITE EFFECTORS
         leftFrontDrive.setPower(leftFrontPower);
         rightFrontDrive.setPower(rightFrontPower);
         leftBackDrive.setPower(leftBackPower);
         rightBackDrive.setPower(rightBackPower);
 
-        // Show the elapsed game time and wheel power.
+        // intake here
+
+        extension.setPower(extensionPower);
+
+        // UPDATE TELEMETRY
         telemetry.addData("Status", "Run Time: " + runtime.toString());
         telemetry.addData("Front left/Right", "%4.2f, %4.2f", leftFrontPower, rightFrontPower);
         telemetry.addData("Back  left/Right", "%4.2f, %4.2f", leftBackPower, rightBackPower);
