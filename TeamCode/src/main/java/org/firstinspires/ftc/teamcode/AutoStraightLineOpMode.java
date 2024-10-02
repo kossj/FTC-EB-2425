@@ -53,6 +53,7 @@ import com.qualcomm.robotcore.util.Range;
 
 // This Straight Line auto simple treats the base as a tank drive.
 @Autonomous(name="Auto: Straight Line", group="Auto", preselectTeleOp = "TeleOpControlOpMode")
+@Disabled
 public class AutoStraightLineOpMode extends OpMode
 {
     // Declare OpMode members.

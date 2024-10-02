@@ -96,9 +96,9 @@ public class TeleOpControlOpMode extends OpMode
         rightFrontDrive = hardwareMap.get(DcMotor.class, "right_front_drive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "right_back_drive");
 
-        intake = hardwareMap.get(Servo.class, "intake");
-        extension = hardwareMap.get(DcMotor.class, "extension");
-        pivot = hardwareMap.get(DcMotor.class, "pivot");
+//        intake = hardwareMap.get(Servo.class, "intake");
+//        extension = hardwareMap.get(DcMotor.class, "extension");
+//        pivot = hardwareMap.get(DcMotor.class, "pivot");
 
         // TODO: Make sure all motors are facing the correct direction. Go one at a time.
         leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
@@ -106,9 +106,9 @@ public class TeleOpControlOpMode extends OpMode
         rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
 
-        intake.setDirection(Servo.Direction.FORWARD); // Forward should INTAKE.
-        extension.setDirection(DcMotorSimple.Direction.FORWARD); // Forward should EXTEND.
-        pivot.setDirection(DcMotorSimple.Direction.FORWARD); // Forward should pivot UP, or away from the stowed position.
+//        intake.setDirection(Servo.Direction.FORWARD); // Forward should INTAKE.
+//        extension.setDirection(DcMotorSimple.Direction.FORWARD); // Forward should EXTEND.
+//        pivot.setDirection(DcMotorSimple.Direction.FORWARD); // Forward should pivot UP, or away from the stowed position.
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
@@ -228,7 +228,7 @@ public class TeleOpControlOpMode extends OpMode
 
         // PIVOT CODE
         double pivotPower;
-        if
+
 
         // WRITE EFFECTORS
         leftFrontDrive.setPower(leftFrontPower);
@@ -238,7 +238,7 @@ public class TeleOpControlOpMode extends OpMode
 
         // intake here
 
-        extension.setPower(extensionPower);
+//        extension.setPower(extensionPower);
 
         // UPDATE TELEMETRY
         telemetry.addData("Status", "Run Time: " + runtime.toString());
