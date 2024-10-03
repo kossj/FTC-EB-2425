@@ -76,6 +76,13 @@ public class TeleOpControlOpMode extends OpMode
     private double PIVOT_UP_POWER = 1.0;
     private double PIVOT_DOWN_POWER = -1.0;
 
+    // TODO: Also mentioned in EB docs, the number of encoder ticks in one rotation of the output shaft.
+    private double PIVOT_STOW_TICKS_TO_OUTPUT = 1440;
+
+    private double PIVOT_STOW_POS_REVS = 0;
+    private double PIVOT_A_POS_REVS = 0.5;
+    private double PIVOT_B_POS_REVS = 0.7;
+
 
     /*
      * Code to run ONCE when the driver hits INIT
@@ -94,7 +101,7 @@ public class TeleOpControlOpMode extends OpMode
 
         intake = hardwareMap.get(CRServo.class, "intake");
 //        extension = hardwareMap.get(DcMotor.class, "extension");
-//        pivot = hardwareMap.get(DcMotor.class, "pivot");
+        pivot = hardwareMap.get(DcMotor.class, "pivot");
 
         // TODO: Make sure all motors are facing the correct direction. Go one at a time.
         leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
@@ -104,7 +111,9 @@ public class TeleOpControlOpMode extends OpMode
 
         intake.setDirection(CRServo.Direction.FORWARD); // Forward should INTAKE.
 //        extension.setDirection(DcMotorSimple.Direction.FORWARD); // Forward should EXTEND.
-//        pivot.setDirection(DcMotorSimple.Direction.FORWARD); // Forward should pivot UP, or away from the stowed position.
+        pivot.setDirection(DcMotor.Direction.FORWARD); // Forward should pivot UP, or away from the stowed position.
+
+        pivot.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
