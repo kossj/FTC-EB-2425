@@ -29,15 +29,11 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigurationType;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
 
 /*
  * This file contains an example of an iterative (Non-Linear) "OpMode".
@@ -67,7 +63,7 @@ public class TeleOpControlOpMode extends OpMode
     private DcMotor rightBackDrive = null;
 
     // Declare end-effector members
-    private Servo intake = null;
+    private CRServo intake = null;
     private DcMotor extension = null;
     private DcMotor pivot = null;
 
@@ -96,7 +92,7 @@ public class TeleOpControlOpMode extends OpMode
         rightFrontDrive = hardwareMap.get(DcMotor.class, "right_front_drive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "right_back_drive");
 
-//        intake = hardwareMap.get(Servo.class, "intake");
+        intake = hardwareMap.get(CRServo.class, "intake");
 //        extension = hardwareMap.get(DcMotor.class, "extension");
 //        pivot = hardwareMap.get(DcMotor.class, "pivot");
 
@@ -106,7 +102,7 @@ public class TeleOpControlOpMode extends OpMode
         rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
 
-//        intake.setDirection(Servo.Direction.FORWARD); // Forward should INTAKE.
+        intake.setDirection(CRServo.Direction.FORWARD); // Forward should INTAKE.
 //        extension.setDirection(DcMotorSimple.Direction.FORWARD); // Forward should EXTEND.
 //        pivot.setDirection(DcMotorSimple.Direction.FORWARD); // Forward should pivot UP, or away from the stowed position.
 
@@ -237,7 +233,7 @@ public class TeleOpControlOpMode extends OpMode
         rightBackDrive.setPower(rightBackPower);
 
         // intake here
-
+        intake.setPower(intakePower);
 //        extension.setPower(extensionPower);
 
         // UPDATE TELEMETRY
