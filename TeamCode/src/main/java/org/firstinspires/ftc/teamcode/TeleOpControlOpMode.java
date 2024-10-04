@@ -185,9 +185,11 @@ public class TeleOpControlOpMode extends OpMode
             pivotUpButton = false;
         }
 
-        boolean pivotHomeButton = gamepad1.x;
+        boolean pivotHomeButton = gamepad1.a;
         if (pivotHomeButton) {
-            pivot.setTargetPosition(pivot_home_pos);
+            pivot.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            pivot_target_pos = 0;
+            pivot.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         }
 
         // DRIVE CODE
@@ -252,10 +254,10 @@ public class TeleOpControlOpMode extends OpMode
         double pivotPower;
         if (pivotUpButton) {
 //            pivotPower = PIVOT_UP_POWER;
-            pivot_target_pos+=20;
+            pivot_target_pos+=5;
         } else if (pivotDownButton) {
 //            pivotPower = PIVOT_DOWN_POWER;
-            pivot_target_pos-=20;
+            pivot_target_pos-=5;
 
         }
 
