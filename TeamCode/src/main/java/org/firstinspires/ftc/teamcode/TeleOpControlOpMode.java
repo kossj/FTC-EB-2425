@@ -57,13 +57,14 @@ public class TeleOpControlOpMode extends OpMode
     private ElapsedTime runtime = new ElapsedTime();
 
     // Declare drive motors
-    private DcMotor leftFrontDrive = null;
+    private CRServo leftFrontDrive = null;
     private DcMotor leftBackDrive = null;
-    private DcMotor rightFrontDrive = null;
+    private CRServo rightFrontDrive = null;
     private DcMotor rightBackDrive = null;
 
     // Declare end-effector members
     private CRServo intake = null;
+    //private Ser = null;
     private DcMotor extension = null;
     private DcMotor pivot = null;
 
@@ -94,26 +95,26 @@ public class TeleOpControlOpMode extends OpMode
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must correspond to the names assigned during the robot configuration
         // step (using the FTC Robot Controller app on the phone).
-        leftFrontDrive  = hardwareMap.get(DcMotor.class, "left_front_drive");
+        leftFrontDrive  = hardwareMap.get(CRServo.class, "left_front_drive");
         leftBackDrive  = hardwareMap.get(DcMotor.class, "left_back_drive");
-        rightFrontDrive = hardwareMap.get(DcMotor.class, "right_front_drive");
+        rightFrontDrive = hardwareMap.get(CRServo.class, "right_front_drive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "right_back_drive");
 
         intake = hardwareMap.get(CRServo.class, "intake");
-//        extension = hardwareMap.get(DcMotor.class, "extension");
+        extension = hardwareMap.get(DcMotor.class, "extension");
         pivot = hardwareMap.get(DcMotor.class, "pivot");
 
         // TODO: Make sure all motors are facing the correct direction. Go one at a time.
-        leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
+        leftFrontDrive.setDirection(CRServo.Direction.REVERSE);
         leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
+        rightFrontDrive.setDirection(CRServo.Direction.FORWARD);
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
 
         intake.setDirection(CRServo.Direction.FORWARD); // Forward should INTAKE.
-//        extension.setDirection(DcMotorSimple.Direction.FORWARD); // Forward should EXTEND.
+        extension.setDirection(DcMotor.Direction.FORWARD); // Forward should EXTEND.
         pivot.setDirection(DcMotor.Direction.FORWARD); // Forward should pivot UP, or away from the stowed position.
 
-        pivot.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//        pivot.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
@@ -233,6 +234,13 @@ public class TeleOpControlOpMode extends OpMode
 
         // PIVOT CODE
         double pivotPower;
+        if (pivotUpButton) {
+            pivotPower = PIVOT_UP_POWER;
+        } else if (pivotDownButton) {
+            pivotPower = PIVOT_DOWN_POWER;
+        } else {
+            pivotPower = 0;
+        }
 
 
         // WRITE EFFECTORS
@@ -241,14 +249,17 @@ public class TeleOpControlOpMode extends OpMode
         leftBackDrive.setPower(leftBackPower);
         rightBackDrive.setPower(rightBackPower);
 
-        // intake here
         intake.setPower(intakePower);
-//        extension.setPower(extensionPower);
+        extension.setPower(extensionPower);
+        pivot.setPower(pivotPower);
 
         // UPDATE TELEMETRY
         telemetry.addData("Status", "Run Time: " + runtime.toString());
         telemetry.addData("Front left/Right", "%4.2f, %4.2f", leftFrontPower, rightFrontPower);
         telemetry.addData("Back  left/Right", "%4.2f, %4.2f", leftBackPower, rightBackPower);
+        telemetry.addData("Intake", "%%4.2f", intakePower);
+        telemetry.addData("Extension", "%4.2f", extensionPower);
+        telemetry.addData("Pivot", "%4.2f", pivotPower);
         telemetry.update();
     }
 
