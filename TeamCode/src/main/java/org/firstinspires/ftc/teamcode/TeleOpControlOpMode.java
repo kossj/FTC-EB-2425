@@ -33,6 +33,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 /*
@@ -84,6 +85,9 @@ public class TeleOpControlOpMode extends OpMode
     private double PIVOT_A_POS_REVS = 0.5;
     private double PIVOT_B_POS_REVS = 0.7;
 
+    private int pivot_target_pos;
+    private int pivot_home_pos;
+
 
     /*
      * Code to run ONCE when the driver hits INIT
@@ -111,11 +115,14 @@ public class TeleOpControlOpMode extends OpMode
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
 
         intake.setDirection(CRServo.Direction.FORWARD); // Forward should INTAKE.
-        extension.setDirection(DcMotor.Direction.FORWARD); // Forward should EXTEND.
-        pivot.setDirection(DcMotor.Direction.FORWARD); // Forward should pivot UP, or away from the stowed position.
+        extension.setDirection(DcMotor.Direction.REVERSE); // Forward should EXTEND.
+        pivot.setDirection(DcMotor.Direction.REVERSE); // Forward should pivot UP, or away from the stowed position.
 
-        pivot.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//        pivot.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        extension.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         pivot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        pivot_home_pos = 0;
+
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
@@ -140,6 +147,9 @@ public class TeleOpControlOpMode extends OpMode
     @Override
     public void start() {
         runtime.reset();
+        pivot_target_pos = 0;
+        pivot.setTargetPosition(pivot_target_pos);
+        pivot.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
     /*
@@ -173,6 +183,11 @@ public class TeleOpControlOpMode extends OpMode
         boolean pivotDownButton = gamepad1.dpad_down;
         if (pivotUpButton && pivotDownButton) {
             pivotUpButton = false;
+        }
+
+        boolean pivotHomeButton = gamepad1.x;
+        if (pivotHomeButton) {
+            pivot.setTargetPosition(pivot_home_pos);
         }
 
         // DRIVE CODE
@@ -237,12 +252,11 @@ public class TeleOpControlOpMode extends OpMode
         double pivotPower;
         if (pivotUpButton) {
 //            pivotPower = PIVOT_UP_POWER;
-            pivot.setTargetPosition(pivot.getCurrentPosition()+20);
+            pivot_target_pos+=20;
         } else if (pivotDownButton) {
 //            pivotPower = PIVOT_DOWN_POWER;
-            pivot.setTargetPosition(pivot.getCurrentPosition()-20);
-        } else {
-            pivot.setTargetPosition(pivot.getCurrentPosition());
+            pivot_target_pos-=20;
+
         }
 
 
@@ -254,6 +268,7 @@ public class TeleOpControlOpMode extends OpMode
 
         intake.setPower(intakePower);
         extension.setPower(extensionPower);
+        pivot.setTargetPosition(pivot_target_pos);
         pivot.setPower(0.5);
 
         // UPDATE TELEMETRY
@@ -261,8 +276,8 @@ public class TeleOpControlOpMode extends OpMode
         telemetry.addData("Front left/Right", "%4.2f, %4.2f", leftFrontPower, rightFrontPower);
         telemetry.addData("Back  left/Right", "%4.2f, %4.2f", leftBackPower, rightBackPower);
         telemetry.addData("Intake", "%%4.2f", intakePower);
-        telemetry.addData("Extension", "%4.2f", extensionPower);
-        telemetry.addData("Pivot Current/Target", "%4.2f, %4.2f", pivot.getCurrentPosition(), pivot.getTargetPosition());
+//        telemetry.addData("Extension", "%4.2f", extensionPower);
+        telemetry.addData("Pivot Current/Target", "%d, %d", pivot.getCurrentPosition(), pivot.getTargetPosition());
         telemetry.update();
     }
 
