@@ -75,8 +75,7 @@ public class TeleOpControlOpMode extends OpMode
     private double EXTENSION_OUT_POWER = 1.0;
     private double EXTENSION_IN_POWER = -1.0;
 
-    private double PIVOT_UP_POWER = 1.0;
-    private double PIVOT_DOWN_POWER = -1.0;
+
 
     // TODO: Also mentioned in EB docs, the number of encoder ticks in one rotation of the output shaft.
     private double PIVOT_STOW_TICKS_TO_OUTPUT = 1440;
@@ -87,6 +86,13 @@ public class TeleOpControlOpMode extends OpMode
 
     private int pivot_target_pos;
     private int pivot_home_pos;
+
+    private double PIVOT_UP_POWER = 1.0;
+    private double PIVOT_DOWN_POWER = -1.0;
+    private double PIVOT_HOLD_POWER = 1.0;
+    private enum PivotModes {UP, HOLD, DOWN};
+    private PivotModes pivotMode;
+
 
 
     /*
@@ -147,9 +153,8 @@ public class TeleOpControlOpMode extends OpMode
     @Override
     public void start() {
         runtime.reset();
-        pivot_target_pos = 0;
-        pivot.setTargetPosition(pivot_target_pos);
-        pivot.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        pivotMode = PivotModes.HOLD;
+        pivot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
     /*
@@ -162,13 +167,12 @@ public class TeleOpControlOpMode extends OpMode
         // COLLECT INPUTS
         // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
         double axial   = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
-        double lateral =  gamepad1.left_stick_x;
-        double yaw     =  gamepad1.right_stick_x;
+        double lateral =  -gamepad1.right_stick_x;
+        double yaw     =  -gamepad1.left_stick_x;
 
         boolean intakeInButton = gamepad1.right_bumper;
         boolean intakeOutButton = gamepad1.left_bumper;
         // This conditional reduces ambiguity in an edge case where both bumpers are pressed.
-        // Otherwise, this would be resolved by which function calls the motor value first.
         if (intakeInButton && intakeOutButton) {
             intakeInButton = false;
         }
@@ -189,7 +193,8 @@ public class TeleOpControlOpMode extends OpMode
         if (pivotHomeButton) {
             pivot.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             pivot_target_pos = 0;
-            pivot.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//            pivot.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            pivot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
 
         // DRIVE CODE
@@ -250,15 +255,32 @@ public class TeleOpControlOpMode extends OpMode
             extensionPower = 0;
         }
 
-        // PIVOT CODE
-        double pivotPower;
+        // Determine pivot mode
         if (pivotUpButton) {
-//            pivotPower = PIVOT_UP_POWER;
-            pivot_target_pos+=5;
+            pivotMode = PivotModes.UP;
         } else if (pivotDownButton) {
-//            pivotPower = PIVOT_DOWN_POWER;
-            pivot_target_pos-=5;
+            pivotMode = PivotModes.DOWN;
+        } else {
+            pivotMode = PivotModes.HOLD;
+        }
 
+        // Make sure that motor is in the correct control mode.
+        // If there is a mismatch, we are transferring into that mode.
+        // If we are transferring into HOLD mode, set the target hold position.
+        if ((pivotMode == PivotModes.UP || pivotMode == PivotModes.DOWN) && (pivot.getMode() != DcMotor.RunMode.RUN_USING_ENCODER)) {
+            pivot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        } else if ((pivotMode == PivotModes.HOLD) && (pivot.getMode() != DcMotor.RunMode.RUN_TO_POSITION)) {
+            pivot.setTargetPosition(pivot.getCurrentPosition());
+            pivot.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        }
+
+        double pivotPower;
+        if (pivotMode == PivotModes.UP) {
+            pivotPower = PIVOT_UP_POWER;
+        } else if (pivotMode == PivotModes.DOWN) {
+            pivotPower = PIVOT_DOWN_POWER;
+        } else {
+            pivotPower = PIVOT_HOLD_POWER;
         }
 
 
@@ -268,11 +290,19 @@ public class TeleOpControlOpMode extends OpMode
         leftBackDrive.setPower(leftBackPower);
         rightBackDrive.setPower(rightBackPower);
 
+
         intake.setPower(intakePower);
         extension.setPower(extensionPower);
-        pivot.setTargetPosition(pivot_target_pos);
-        pivot.setPower(0.5);
+        pivot.setPower(pivotPower);
 
+        String pivot_mode_str;
+        if (pivotMode == PivotModes.UP) {
+            pivot_mode_str = "UP";
+        } else if (pivotMode == PivotModes.DOWN) {
+            pivot_mode_str = "DOWN";
+        } else {
+            pivot_mode_str = "HOLD";
+        }
         // UPDATE TELEMETRY
         telemetry.addData("Status", "Run Time: " + runtime.toString());
         telemetry.addData("Front left/Right", "%4.2f, %4.2f", leftFrontPower, rightFrontPower);
@@ -280,6 +310,7 @@ public class TeleOpControlOpMode extends OpMode
         telemetry.addData("Intake", "%%4.2f", intakePower);
 //        telemetry.addData("Extension", "%4.2f", extensionPower);
         telemetry.addData("Pivot Current/Target", "%d, %d", pivot.getCurrentPosition(), pivot.getTargetPosition());
+        telemetry.addData("Pivot MODE", "%s", pivot_mode_str);
         telemetry.update();
     }
 
