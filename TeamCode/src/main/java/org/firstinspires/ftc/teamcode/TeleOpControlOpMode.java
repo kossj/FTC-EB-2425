@@ -29,11 +29,12 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.lynx.commands.core.LynxResetMotorEncoderCommand;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 /*
@@ -67,10 +68,14 @@ public class TeleOpControlOpMode extends OpMode
     private CRServo intake = null;
     //private Ser = null;
     private DcMotor extension = null;
-    private DcMotor pivot = null;
+    private DcMotorEx pivot = null;
 
     private double INTAKE_IN_POWER = 1.0;
     private double INTAKE_OUT_POWER = -1.0;
+    private double INTAKE_OFF_POWER = 0.0;
+
+    private double intakePower = INTAKE_OFF_POWER;
+
 
     private double EXTENSION_OUT_POWER = 1.0;
     private double EXTENSION_IN_POWER = -1.0;
@@ -87,14 +92,14 @@ public class TeleOpControlOpMode extends OpMode
     private int pivot_target_pos;
     private int pivot_home_pos;
 
-    private double PIVOT_UP_POWER = 1.0;
-    private double PIVOT_DOWN_POWER = -1.0;
-    private double PIVOT_HOLD_POWER = 1.0;
+    private double PIVOT_UP_POWER = 0.25;
+    private double PIVOT_DOWN_POWER = -0.0125;
+    private double PIVOT_HOLD_POWER = 0.001;
     private enum PivotModes {UP, HOLD, DOWN};
     private PivotModes pivotMode;
 
-
-
+    private double PIVOT_kP = 0.05;
+    private double PIVOT_kF = 0;
     /*
      * Code to run ONCE when the driver hits INIT
      */
@@ -112,7 +117,7 @@ public class TeleOpControlOpMode extends OpMode
 
         intake = hardwareMap.get(CRServo.class, "intake");
         extension = hardwareMap.get(DcMotor.class, "extension");
-        pivot = hardwareMap.get(DcMotor.class, "pivot");
+        pivot = hardwareMap.get(DcMotorEx.class, "pivot");
 
         // TODO: Make sure all motors are facing the correct direction. Go one at a time.
         leftFrontDrive.setDirection(CRServo.Direction.REVERSE);
@@ -170,31 +175,26 @@ public class TeleOpControlOpMode extends OpMode
         double lateral =  -gamepad1.right_stick_x;
         double yaw     =  -gamepad1.left_stick_x;
 
-        boolean intakeInButton = gamepad1.right_bumper;
-        boolean intakeOutButton = gamepad1.left_bumper;
-        // This conditional reduces ambiguity in an edge case where both bumpers are pressed.
+        boolean intakeInButton = gamepad1.a;
+        boolean intakeOutButton = gamepad1.b;
+        boolean intakeOffButton = gamepad1.x;
+        // This conditional reduces ambiguity when multiple buttons are pressed.
         if (intakeInButton && intakeOutButton) {
             intakeInButton = false;
+        } else if (intakeOffButton && (intakeInButton || intakeOutButton)) {
+            intakeInButton = intakeOutButton = false;
         }
 
-        boolean extensionOutButton = gamepad1.dpad_left;
-        boolean extensionInButton = gamepad1.dpad_right;
+        boolean extensionOutButton = gamepad1.left_trigger > 0.2;
+        boolean extensionInButton = gamepad1.left_bumper;
         if (extensionOutButton && extensionInButton) {
             extensionOutButton = false;
         }
 
-        boolean pivotUpButton = gamepad1.dpad_up;
-        boolean pivotDownButton = gamepad1.dpad_down;
+        boolean pivotUpButton = gamepad1.right_bumper;
+        boolean pivotDownButton = gamepad1.right_trigger > 0.2;
         if (pivotUpButton && pivotDownButton) {
             pivotUpButton = false;
-        }
-
-        boolean pivotHomeButton = gamepad1.a;
-        if (pivotHomeButton) {
-            pivot.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            pivot_target_pos = 0;
-//            pivot.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            pivot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
 
         // DRIVE CODE
@@ -236,12 +236,11 @@ public class TeleOpControlOpMode extends OpMode
             */
 
         // INTAKE CODE
-        double intakePower;
         if (intakeInButton) {
             intakePower = INTAKE_IN_POWER;
         } else if (intakeOutButton) {
             intakePower = INTAKE_OUT_POWER;
-        } else {
+        } else if (intakeOffButton) {
             intakePower = 0.0;
         }
 
@@ -267,12 +266,12 @@ public class TeleOpControlOpMode extends OpMode
         // Make sure that motor is in the correct control mode.
         // If there is a mismatch, we are transferring into that mode.
         // If we are transferring into HOLD mode, set the target hold position.
-        if ((pivotMode == PivotModes.UP || pivotMode == PivotModes.DOWN) && (pivot.getMode() != DcMotor.RunMode.RUN_USING_ENCODER)) {
-            pivot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        } else if ((pivotMode == PivotModes.HOLD) && (pivot.getMode() != DcMotor.RunMode.RUN_TO_POSITION)) {
-            pivot.setTargetPosition(pivot.getCurrentPosition());
-            pivot.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        }
+//        if ((pivotMode == PivotModes.UP || pivotMode == PivotModes.DOWN) && (pivot.getMode() != DcMotor.RunMode.RUN_USING_ENCODER)) {
+//            pivot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        } else if ((pivotMode == PivotModes.HOLD) && (pivot.getMode() != DcMotor.RunMode.RUN_TO_POSITION)) {
+//            pivot.setTargetPosition(pivot.getCurrentPosition());
+//            pivot.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//        }
 
         double pivotPower;
         if (pivotMode == PivotModes.UP) {
