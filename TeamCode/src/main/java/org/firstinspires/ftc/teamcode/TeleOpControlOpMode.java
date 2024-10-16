@@ -82,6 +82,8 @@ public class TeleOpControlOpMode extends OpMode
     private double EXTENSION_OUT_POWER = 1.0;
     private double EXTENSION_IN_POWER = -1.0;
 
+    private boolean was_holding = false;
+
     private int pivot_target_pos;
     private int pivot_home_pos;
 
@@ -247,12 +249,25 @@ public class TeleOpControlOpMode extends OpMode
         // Determine pivot mode
         if (pivotUpButton) {
             pivotMode = PivotModes.UP;
-            pivot_target_pos += 5;
+            was_holding = false;
+            pivot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            pivot.setPower(0.75);
+//            pivot_target_pos += 5;
         } else if (pivotDownButton) {
             pivotMode = PivotModes.DOWN;
-            pivot_target_pos -= 5;
+            was_holding = false;
+            pivot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            pivot.setPower(-0.75);
+//            pivot_target_pos -= 5;
         } else {
             pivotMode = PivotModes.HOLD;
+            if (!was_holding) {
+                pivot_target_pos = pivot.getCurrentPosition();
+                was_holding = true;
+            }
+            pivot.setTargetPosition(pivot_target_pos);
+            pivot.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            pivot.setPower(0.75);
         }
 
         // Make sure that motor is in the correct control mode.
@@ -284,8 +299,8 @@ public class TeleOpControlOpMode extends OpMode
 
         intake.setPower(intakePower);
         extension.setPower(extensionPower);
-        pivot.setTargetPosition(pivot_target_pos);
-          pivot.setPower(1.0);
+//        pivot.setTargetPosition(pivot_target_pos);
+//          pivot.setPower(1.0);
 
         String pivot_mode_str;
         if (pivotMode == PivotModes.UP) {
