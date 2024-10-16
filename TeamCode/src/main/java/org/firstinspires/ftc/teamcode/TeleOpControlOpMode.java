@@ -37,6 +37,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+
 /*
  * This file contains an example of an iterative (Non-Linear) "OpMode".
  * An OpMode is a 'program' that runs in either the autonomous or the teleop period of an FTC match.
@@ -80,15 +82,6 @@ public class TeleOpControlOpMode extends OpMode
     private double EXTENSION_OUT_POWER = 1.0;
     private double EXTENSION_IN_POWER = -1.0;
 
-
-
-    // TODO: Also mentioned in EB docs, the number of encoder ticks in one rotation of the output shaft.
-    private double PIVOT_STOW_TICKS_TO_OUTPUT = 1440;
-
-    private double PIVOT_STOW_POS_REVS = 0;
-    private double PIVOT_A_POS_REVS = 0.5;
-    private double PIVOT_B_POS_REVS = 0.7;
-
     private int pivot_target_pos;
     private int pivot_home_pos;
 
@@ -97,9 +90,6 @@ public class TeleOpControlOpMode extends OpMode
     private double PIVOT_HOLD_POWER = 0.001;
     private enum PivotModes {UP, HOLD, DOWN};
     private PivotModes pivotMode;
-
-    private double PIVOT_kP = 0.05;
-    private double PIVOT_kF = 0;
     /*
      * Code to run ONCE when the driver hits INIT
      */
@@ -257,8 +247,10 @@ public class TeleOpControlOpMode extends OpMode
         // Determine pivot mode
         if (pivotUpButton) {
             pivotMode = PivotModes.UP;
+            pivot_target_pos += 5;
         } else if (pivotDownButton) {
             pivotMode = PivotModes.DOWN;
+            pivot_target_pos -= 5;
         } else {
             pivotMode = PivotModes.HOLD;
         }
@@ -273,14 +265,14 @@ public class TeleOpControlOpMode extends OpMode
 //            pivot.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 //        }
 
-        double pivotPower;
-        if (pivotMode == PivotModes.UP) {
-            pivotPower = PIVOT_UP_POWER;
-        } else if (pivotMode == PivotModes.DOWN) {
-            pivotPower = PIVOT_DOWN_POWER;
-        } else {
-            pivotPower = PIVOT_HOLD_POWER;
-        }
+//        double pivotPower;
+//        if (pivotMode == PivotModes.UP) {
+//            pivotPower = PIVOT_UP_POWER;
+//        } else if (pivotMode == PivotModes.DOWN) {
+//            pivotPower = PIVOT_DOWN_POWER;
+//        } else {
+//            pivotPower = PIVOT_HOLD_POWER;
+//        }
 
 
         // WRITE EFFECTORS
@@ -292,7 +284,8 @@ public class TeleOpControlOpMode extends OpMode
 
         intake.setPower(intakePower);
         extension.setPower(extensionPower);
-        pivot.setPower(pivotPower);
+        pivot.setTargetPosition(pivot_target_pos);
+          pivot.setPower(1.0);
 
         String pivot_mode_str;
         if (pivotMode == PivotModes.UP) {
@@ -307,8 +300,8 @@ public class TeleOpControlOpMode extends OpMode
         telemetry.addData("Front left/Right", "%4.2f, %4.2f", leftFrontPower, rightFrontPower);
         telemetry.addData("Back  left/Right", "%4.2f, %4.2f", leftBackPower, rightBackPower);
         telemetry.addData("Intake", "%%4.2f", intakePower);
-//        telemetry.addData("Extension", "%4.2f", extensionPower);
-        telemetry.addData("Pivot Current/Target", "%d, %d", pivot.getCurrentPosition(), pivot.getTargetPosition());
+        telemetry.addData("Extension", "%4.2f", extension.getPower());
+        telemetry.addData("Pivot Current/Target/power", "%d, %d, %4.2f", pivot.getCurrentPosition(), pivot.getTargetPosition(),pivot.getPower());
         telemetry.addData("Pivot MODE", "%s", pivot_mode_str);
         telemetry.update();
     }
