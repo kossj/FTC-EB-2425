@@ -29,15 +29,12 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.hardware.lynx.commands.core.LynxResetMotorEncoderCommand;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
-
-import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 
 /*
  * This file contains an example of an iterative (Non-Linear) "OpMode".
@@ -68,40 +65,27 @@ public class TeleOpControlOpMode extends OpMode
 
     // Declare end-effector members
     private CRServo intake = null;
-    //private Ser = null;
     private DcMotor extension = null;
     private DcMotorEx pivot = null;
 
-    private double INTAKE_IN_POWER = 1.0;
-    private double INTAKE_OUT_POWER = -1.0;
-    private double INTAKE_OFF_POWER = 0.0;
+    private final double INTAKE_IN_POWER = 1.0;
+    private final double INTAKE_OUT_POWER = -1.0;
+    private final double INTAKE_OFF_POWER = 0.0;
 
     private double intakePower = INTAKE_OFF_POWER;
 
 
-    private double EXTENSION_OUT_POWER = 1.0;
-    private double EXTENSION_IN_POWER = -1.0;
+    private final double EXTENSION_OUT_POWER = 1.0;
+    private final double EXTENSION_IN_POWER = -1.0;
 
     private boolean was_holding = false;
 
     private int pivot_target_pos;
-    private int pivot_home_pos;
 
-    private double PIVOT_UP_POWER = 0.25;
-    private double PIVOT_DOWN_POWER = -0.0125;
-    private double PIVOT_HOLD_POWER = 0.001;
-    private enum PivotModes {UP, HOLD, DOWN};
-    private PivotModes pivotMode;
-    /*
-     * Code to run ONCE when the driver hits INIT
-     */
     @Override
     public void init() {
         telemetry.addData("Status", "Initialized");
 
-        // Initialize the hardware variables. Note that the strings used here as parameters
-        // to 'get' must correspond to the names assigned during the robot configuration
-        // step (using the FTC Robot Controller app on the phone).
         leftFrontDrive  = hardwareMap.get(CRServo.class, "left_front_drive");
         leftBackDrive  = hardwareMap.get(DcMotor.class, "left_back_drive");
         rightFrontDrive = hardwareMap.get(CRServo.class, "right_front_drive");
@@ -121,42 +105,24 @@ public class TeleOpControlOpMode extends OpMode
         extension.setDirection(DcMotor.Direction.REVERSE); // Forward should EXTEND.
         pivot.setDirection(DcMotor.Direction.REVERSE); // Forward should pivot UP, or away from the stowed position.
 
-//        pivot.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         extension.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         pivot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        pivot_home_pos = 0;
 
+        pivot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
-
-        // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
-        // Pushing the left stick forward MUST make robot go forward. So adjust these two lines based on your first test drive.
-        // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
-
-        // Tell the driver that initialization is complete.
     }
 
-    /*
-     * Code to run REPEATEDLY after the driver hits INIT, but before they hit START
-     */
     @Override
     public void init_loop() {
     }
 
-    /*
-     * Code to run ONCE when the driver hits START
-     */
     @Override
     public void start() {
         runtime.reset();
-        pivotMode = PivotModes.HOLD;
-        pivot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
-    /*
-     * Code to run REPEATEDLY after the driver hits START but before they hit STOP
-     */
     @Override
     public void loop() {
         double max;
@@ -210,23 +176,6 @@ public class TeleOpControlOpMode extends OpMode
             rightBackPower  /= max;
         }
 
-        // This is test code:
-        //
-        // Uncomment the following code to test your motor directions.
-        // Each button should make the corresponding motor run FORWARD.
-        //   1) First get all the motors to take to correct positions on the robot
-        //      by adjusting your Robot Configuration if necessary.
-        //   2) Then make sure they run in the correct direction by modifying the
-        //      the setDirection() calls above.
-        // Once the correct motors move in the correct direction re-comment this code.
-
-            /*
-            leftFrontPower  = gamepad1.x ? 1.0 : 0.0;  // X gamepad
-            leftBackPower   = gamepad1.a ? 1.0 : 0.0;  // A gamepad
-            rightFrontPower = gamepad1.y ? 1.0 : 0.0;  // Y gamepad
-            rightBackPower  = gamepad1.b ? 1.0 : 0.0;  // B gamepad
-            */
-
         // INTAKE CODE
         if (intakeInButton) {
             intakePower = INTAKE_IN_POWER;
@@ -246,21 +195,19 @@ public class TeleOpControlOpMode extends OpMode
             extensionPower = 0;
         }
 
+        String pivot_mode_str; // Used for telemetry
         // Determine pivot mode
         if (pivotUpButton) {
-            pivotMode = PivotModes.UP;
             was_holding = false;
             pivot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             pivot.setPower(0.75);
-//            pivot_target_pos += 5;
+            pivot_mode_str = "UP";
         } else if (pivotDownButton) {
-            pivotMode = PivotModes.DOWN;
             was_holding = false;
             pivot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             pivot.setPower(-0.75);
-//            pivot_target_pos -= 5;
+            pivot_mode_str = "DOWN";
         } else {
-            pivotMode = PivotModes.HOLD;
             if (!was_holding) {
                 pivot_target_pos = pivot.getCurrentPosition();
                 was_holding = true;
@@ -268,27 +215,8 @@ public class TeleOpControlOpMode extends OpMode
             pivot.setTargetPosition(pivot_target_pos);
             pivot.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             pivot.setPower(0.75);
+            pivot_mode_str = "HOLD";
         }
-
-        // Make sure that motor is in the correct control mode.
-        // If there is a mismatch, we are transferring into that mode.
-        // If we are transferring into HOLD mode, set the target hold position.
-//        if ((pivotMode == PivotModes.UP || pivotMode == PivotModes.DOWN) && (pivot.getMode() != DcMotor.RunMode.RUN_USING_ENCODER)) {
-//            pivot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//        } else if ((pivotMode == PivotModes.HOLD) && (pivot.getMode() != DcMotor.RunMode.RUN_TO_POSITION)) {
-//            pivot.setTargetPosition(pivot.getCurrentPosition());
-//            pivot.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//        }
-
-//        double pivotPower;
-//        if (pivotMode == PivotModes.UP) {
-//            pivotPower = PIVOT_UP_POWER;
-//        } else if (pivotMode == PivotModes.DOWN) {
-//            pivotPower = PIVOT_DOWN_POWER;
-//        } else {
-//            pivotPower = PIVOT_HOLD_POWER;
-//        }
-
 
         // WRITE EFFECTORS
         leftFrontDrive.setPower(leftFrontPower);
@@ -299,17 +227,7 @@ public class TeleOpControlOpMode extends OpMode
 
         intake.setPower(intakePower);
         extension.setPower(extensionPower);
-//        pivot.setTargetPosition(pivot_target_pos);
-//          pivot.setPower(1.0);
 
-        String pivot_mode_str;
-        if (pivotMode == PivotModes.UP) {
-            pivot_mode_str = "UP";
-        } else if (pivotMode == PivotModes.DOWN) {
-            pivot_mode_str = "DOWN";
-        } else {
-            pivot_mode_str = "HOLD";
-        }
         // UPDATE TELEMETRY
         telemetry.addData("Status", "Run Time: " + runtime.toString());
         telemetry.addData("Front left/Right", "%4.2f, %4.2f", leftFrontPower, rightFrontPower);
@@ -321,9 +239,7 @@ public class TeleOpControlOpMode extends OpMode
         telemetry.update();
     }
 
-    /*
-     * Code to run ONCE after the driver hits STOP
-     */
+
     @Override
     public void stop() {
     }
